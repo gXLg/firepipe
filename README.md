@@ -1,6 +1,6 @@
 # Firepipe
 <sup><i>
-<<b>F</b>ramework for
+<b>F</b>ramework for
 <b>I</b>terative,
 <b>Re</b>sumable
 <b>P</b>rocessing and
@@ -13,11 +13,12 @@ A generator framework for iterative, serializable parsers and processors
 for arbitrary structured data.
 
 # Usage
-> [!NOTE]
-> There are plans to publish this package to PyPi in the future.
 
 To use the library, clone the repo, add it in `PYTHONPATH` and
 simply import `firepipe`.
+
+> [!NOTE]
+> There are plans to publish this package to PyPi in the future.
 
 > [!IMPORTANT]
 > The name **might be slightly or completely changed in the future**,
@@ -74,12 +75,14 @@ Common use cases:
   regular expressions, with an additional ability for
   circular references
 * The library is equipped with a set of useful, predefined
-  rules, such as `Ordered`, `Or`, `Repest`, `Star`
+  rules, such as `Ordered`, `Or`, `Repeat`, `Star`
 * Operators are defined directly at the grammar level
   through `Op` and `ArgOp` and can support any number of arguments
 * The grammar allows any types of associativity
 * The AST produced by the parser is flattened, making the handling
-  of nested abstract rules easier
+  of nested abstract rules easier (note: the resulting AST is not
+  flat, but all unnecessary tree levels are removed in the process
+  of construction)
 
 ## Serialization
 * Every component of the library is serializable

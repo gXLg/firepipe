@@ -1,6 +1,6 @@
 from typing import Iterable, Any
 
-from ..runtime.types import Node, Operator
+from ..processing.types import Node, Operator
 from ..typing import RuntimeTypeSelector
 from ..lexing.types import AbstractTokenType
 from ..utils import IndexedView, reduce, setstate

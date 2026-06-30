@@ -3,7 +3,7 @@ from typing import Iterable, Any
 
 from ..utils import IndexedView, reduce, setstate
 from ..lexing.types import Token
-from ..runtime.types import Node
+from ..processing.types import Node
 from .types import AbstractRule, Request, Result, Failure
 
 

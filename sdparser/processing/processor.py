@@ -13,7 +13,7 @@ class Value:
   def __reduce__(self):
     return reduce(self, (self.value,))
 
-class RunFrame:
+class ProcessorFrame:
   def __init__(self, node: Node):
     self.node = node
     self.arg_index = 0
@@ -23,11 +23,11 @@ class RunFrame:
   def args_done(self) -> bool:
     return self.arg_index == len(self.node.args)
 
-  def process_arg(self, stack: Iterable[RunFrame]):
+  def process_arg(self, stack: Iterable[ProcessorFrame]):
     arg = self.node.args[self.arg_index]
     self.arg_index += 1
     if isinstance(arg, Node):
-      stack.append(RunFrame(arg))
+      stack.append(ProcessorFrame(arg))
     elif isinstance(arg, Token):
       self.values.append(Value(arg.type.prepare(arg)))
     elif isinstance(arg, Value):
@@ -46,7 +46,7 @@ class RunFrame:
     func = getattr(selected_type, op.method)
     self.values[:op.argc] = [Value(func(op.token, env, *args))]
 
-  def finalize(self, stack: Iterable[RunFrame]):
+  def finalize(self, stack: Iterable[ProcessorFrame]):
     if len(self.values) != 1:
       raise Exception(f"Frame produced {len(self.values)} values (instead of 1)")
     res = self.values[0]
@@ -57,7 +57,7 @@ class RunFrame:
       stack[-1].values.append(res)
     return res.value
 
-  def step(self, env: Any, stack: Iterable[RunFrame]) -> Any:
+  def step(self, env: Any, stack: Iterable[ProcessorFrame]) -> Any:
     if not self.args_done():
       self.process_arg(stack)
       return
@@ -72,11 +72,11 @@ class RunFrame:
   def __setstate__(self, state):
     setstate(self, state)
 
-class Runner:
+class Processor:
   def __init__(self, env: Any):
     self.env = env
 
-  def run(self, frame: RunFrame) -> Any:
+  def process(self, frame: ProcessorFrame) -> Any:
     stack = [frame]
     res = None
     while stack:

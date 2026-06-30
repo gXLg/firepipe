@@ -6,7 +6,7 @@ from ..typing import RuntimeTypeSelector
 from ..utils import reduce
 
 class Node:
-  def __init__(self, args: Iterable[N | Token]=(), ops: Iterable[Operator]=()):
+  def __init__(self, args: Iterable[Node | Token]=(), ops: Iterable[Operator]=()):
     self.args = tuple(args)
     self.ops = tuple(ops)
 
@@ -15,7 +15,7 @@ class Node:
     ops = ", ".join(map(str, self.ops))
     return f"Node<{args}>({ops})"
 
-  def simplify(self) -> "Node":
+  def simplify(self) -> Node:
     if len(self.args) == 1 and not self.ops:
       if isinstance(self.args[0], Node):
         return self.args[0]

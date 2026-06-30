@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Iterable, Any
 
-from ..runtime.types import Node, Operator
+from ..processing.types import Node, Operator
 from ..lexing.types import AbstractTokenType, Token
 from ..utils import IndexedView, reduce
 

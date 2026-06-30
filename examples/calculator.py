@@ -12,16 +12,6 @@ from sdparser.executing.runtime import RuntimeType, DefaultSelector
 
 #import pickle
 
-PLUS = SymbolTokenType("+")
-MINUS = SymbolTokenType("-")
-MUL = SymbolTokenType("*")
-DIV = SymbolTokenType("/")
-LBR = SymbolTokenType("(")
-RBR = SymbolTokenType(")")
-LAST = SymbolTokenType("_")
-NUM = IntegerTokenType()
-SPACE = WhiteSpaceTokenType()
-
 class OnePiece(RuntimeType):
   def __init__(self):
     super().__init__()
@@ -50,6 +40,17 @@ class OnePiece(RuntimeType):
 type_instance = OnePiece()
 type_selector = DefaultSelector(type_instance)
 
+PLUS = SymbolTokenType("+")
+MINUS = SymbolTokenType("-")
+MUL = SymbolTokenType("*")
+DIV = SymbolTokenType("/")
+LBR = SymbolTokenType("(")
+RBR = SymbolTokenType(")")
+LAST = SymbolTokenType("_")
+NUM = IntegerTokenType()
+SPACE = WhiteSpaceTokenType()
+all_tokens = [PLUS, MINUS, MUL, DIV, LBR, RBR, SPACE, LAST, NUM]
+
 OP_PLUS = type_selector.create_op(PLUS, 2, "plus")
 OP_MINUS = type_selector.create_op(MINUS, 2, "minus")
 OP_MUL = type_selector.create_op(MUL, 2, "mul")
@@ -69,9 +70,7 @@ calc_rules = {
 
 class Calculator:
   def __init__(self):
-    self.lexer = Lexer([
-      PLUS, MINUS, MUL, DIV, LBR, RBR, SPACE, LAST, NUM
-    ])
+    self.lexer = Lexer(all_tokens)
     self.parser = Parser(calc_rules)
     self.env = {}
     self.runner = Runner(self.env)

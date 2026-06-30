@@ -9,7 +9,7 @@ from sdparser.parsing.rules import (
 
 from sdparser.lexing.lexer import Lexer
 from sdparser.parsing.parser import Parser, ParseFrame
-from sdparser.runtime.runner import Runner, Frame
+from sdparser.runtime.runner import Runner, RunFrame
 from sdparser.typing import RuntimeType, DefaultSelector
 
 
@@ -83,7 +83,7 @@ class Calculator:
     #parse_frame = pickle.loads(pickle.dumps(parse_frame))
     node = self.parser.parse(tokens, parse_frame)
 
-    frame = Frame(node)
+    frame = RunFrame(node)
     #frame = pickle.loads(pickle.dumps(frame))
     res = self.runner.run(frame)
 

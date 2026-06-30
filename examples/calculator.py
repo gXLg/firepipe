@@ -1,16 +1,16 @@
 #import pickle
 
-from sdparser.lexing.token_types import (
+from firepipe.lexing.token_types import (
   SymbolTokenType, IntegerTokenType, WhiteSpaceTokenType
 )
-from sdparser.parsing.rules import (
+from firepipe.parsing.rules import (
   Op, ArgOp, Or, Ordered, Syntax, Star
 )
 
-from sdparser.lexing.lexer import Lexer
-from sdparser.parsing.parser import Parser, ParseFrame
-from sdparser.runtime.runner import Runner, RunFrame
-from sdparser.typing import RuntimeType, DefaultSelector
+from firepipe.lexing.lexer import Lexer
+from firepipe.parsing.parser import Parser, ParseFrame
+from firepipe.processing.processor import Processor, ProcessorFrame
+from firepipe.typing import RuntimeType, DefaultSelector
 
 
 class OnePiece(RuntimeType):
@@ -74,7 +74,7 @@ class Calculator:
     self.lexer = Lexer(all_tokens)
     self.parser = Parser(calc_rules)
     self.env = {}
-    self.runner = Runner(self.env)
+    self.processor = Processor(self.env)
 
   def calc(self, expr):
     tokens = self.lexer.lex(expr)
@@ -83,9 +83,9 @@ class Calculator:
     #parse_frame = pickle.loads(pickle.dumps(parse_frame))
     node = self.parser.parse(tokens, parse_frame)
 
-    frame = RunFrame(node)
+    frame = ProcessorFrame(node)
     #frame = pickle.loads(pickle.dumps(frame))
-    res = self.runner.run(frame)
+    res = self.processor.process(frame)
 
     self.env["last"] = res
     return res

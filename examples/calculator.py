@@ -1,16 +1,17 @@
-from sdparser.lexing.types import (
+#import pickle
+
+from sdparser.lexing.token_types import (
   SymbolTokenType, IntegerTokenType, WhiteSpaceTokenType
 )
 from sdparser.parsing.rules import (
-  Or, Ordered, Syntax, Star
+  Op, ArgOp, Or, Ordered, Syntax, Star
 )
 
 from sdparser.lexing.lexer import Lexer
 from sdparser.parsing.parser import Parser, ParseFrame
-from sdparser.executing.runner import Runner, Frame
-from sdparser.executing.runtime import RuntimeType, DefaultSelector
+from sdparser.runtime.runner import Runner, Frame
+from sdparser.typing import RuntimeType, DefaultSelector
 
-#import pickle
 
 class OnePiece(RuntimeType):
   def __init__(self):
@@ -51,13 +52,13 @@ NUM = IntegerTokenType()
 SPACE = WhiteSpaceTokenType()
 all_tokens = [PLUS, MINUS, MUL, DIV, LBR, RBR, SPACE, LAST, NUM]
 
-OP_PLUS = type_selector.create_op(PLUS, 2, "plus")
-OP_MINUS = type_selector.create_op(MINUS, 2, "minus")
-OP_MUL = type_selector.create_op(MUL, 2, "mul")
-OP_DIV = type_selector.create_op(DIV, 2, "div")
-OP_UPLUS = type_selector.create_op(PLUS, 1, "uplus")
-OP_UMINUS = type_selector.create_op(MINUS, 1, "uminus")
-OP_LAST = type_selector.create_arg_op(LAST, "last")
+OP_PLUS = Op(PLUS, 2, type_selector, "_op_plus")
+OP_MINUS = Op(MINUS, 2, type_selector, "_op_minus")
+OP_MUL = Op(MUL, 2, type_selector, "_op_mul")
+OP_DIV = Op(DIV, 2, type_selector, "_op_div")
+OP_UPLUS = Op(PLUS, 1, type_selector, "_op_uplus")
+OP_UMINUS = Op(MINUS, 1, type_selector, "_op_uminus")
+OP_LAST = ArgOp(LAST, type_selector, "_arg_last")
 
 calc_rules = {
   "$": Ordered("sum"),

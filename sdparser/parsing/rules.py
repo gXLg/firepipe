@@ -1,110 +1,48 @@
-from ..executing.node import Node, Operator
+from typing import Iterable, Any
+
+from ..runtime.types import Node, Operator
+from ..typing import RuntimeTypeSelector
 from ..lexing.types import AbstractTokenType
-from ..utils import reduce, setstate
-from .step import Request, Result, Failure
+from ..utils import IndexedView, reduce, setstate
+from .types import AbstractRule, StarNode, Result, Request, Failure
 
 
-class AbstractRule:
-  def __init__(self, *rules):
-    adapted_rules = []
-    for rule in rules:
-      if isinstance(rule, AbstractTokenType):
-        rule = TokenRule(rule)
-      elif isinstance(rule, str):
-        rule = RefRule(rule)
+def fill_node(state: Iterable[Result]):
+  args = []
+  ops = []
+  for _res in state:
+    res = _res.result
+    if isinstance(res, StarNode):
+      args.extend(res.args)
+      ops.extend(res.ops)
+    elif isinstance(res, Node):
+      args.append(res)
+    elif isinstance(res, Operator):
+      ops.append(res)
 
-      adapted_rules.append(rule)
-    self.list = adapted_rules
-
-  def process(self, iview, rules, state):
-    raise NotImplementedError
-
-  def __reduce__(self):
-    return reduce(self, ((),), ("list",))
-
-  def __setstate__(self, state):
-    return setstate(self, state)
-
-  def __str__(self):
-    return f"[{', '.join(map(str, self.list))}]"
-
-class RefRule(AbstractRule):
-  def __init__(self, key):
-    super().__init__()
-    self.key = key
-
-  def process(self, iview, rules, state):
-    if not state:
-      if self.key == "$":
-        raise Exception("Referencing the entry rule")
-      if self.key not in rules:
-        raise Exception("Referencing non-existing rule")
-      return Request(rules[self.key])
-
-    res = state[0]
-    if isinstance(res, Result):
-      if isinstance(res.result, Node):
-        res = Result(res.result.simplify())
-    return res
-
-  def __reduce__(self):
-    return reduce(self, (self.key,))
-
-  def __str__(self):
-    return f"(->{self.key})"
+  return Node(args, ops).simplify()
 
 class Ordered(AbstractRule):
-  def __init__(self, *rules):
+  def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
       return Failure()
     if len(state) == len(self.list):
-      args = []
-      ops = []
-      for _res in state:
-        res = _res.result
-        if isinstance(res, StarNode):
-          args.extend(res.args)
-          ops.extend(res.ops)
-        elif isinstance(res, Node):
-          args.append(res)
-        elif isinstance(res, Operator):
-          ops.append(res)
       iview.discard()
-      return Result(Node(args, ops).simplify())
+      return Result(fill_node(state))
     if not state:
       iview.save()
     l = len(state)
     return Request(self.list[l])
 
-class TokenRule(AbstractRule):
-  def __init__(self, ttype):
-    super().__init__()
-    self.type = ttype
-
-  def process(self, iview, rules, state):
-    if iview.done():
-      return Failure()
-    token = iview.peek(1)[0]
-    if token.type != self.type:
-      return Failure()
-    iview.step(1)
-    return Result(Node([token]))
-
-  def __reduce__(self):
-    return reduce(self, (self.type,))
-
-  def __str__(self):
-    return str(self.type)
-
 class Or(AbstractRule):
-  def __init__(self, *rules):
+  def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
     if state and isinstance(state[-1], Result):
@@ -123,25 +61,15 @@ class Or(AbstractRule):
     return f"[{' | '.join(f'({r})' for r in map(str, self.list))}]"
 
 class Repeat(AbstractRule):
-  def __init__(self, *rules):
+  def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
     l = len(state) % len(self.list)
     if state and isinstance(state[-1], Failure):
       iview.restore()
-      args = []
-      ops = []
-      for _res in state[:-l]:
-        res = _res.result
-        if isinstance(res, StarNode):
-          args.extend(res.args)
-          ops.extend(res.ops)
-        elif isinstance(res, Node):
-          args.append(res)
-        elif isinstance(res, Operator):
-          ops.append(res)
-      return Result(Node(args, ops).simplify())
+      cutoff = l if l else len(self.list)
+      return Result(fill_node(state[:-cutoff]))
     if not l:
       if state:
         iview.discard()
@@ -152,10 +80,10 @@ class Repeat(AbstractRule):
     return f"[{', '.join(map(str, self.list))}]*"
 
 class Star(Repeat):
-  def __init__(self, *rules):
+  def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
     res = super().process(iview, rules, state)
     if isinstance(res, Result):
       node = res.result
@@ -166,14 +94,14 @@ class Star(Repeat):
     return f"*[{', '.join(map(str, self.list))}]*"
 
 class Op(AbstractRule):
-  def __init__(self, rule, argc, type_selector, method):
+  def __init__(self, rule: AbstractRule, argc: int, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule)
     self.rule = rule
     self.argc = argc
     self.type_selector = type_selector
     self.method = method
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -183,7 +111,7 @@ class Op(AbstractRule):
       raise Exception("Only normal nodes can be declared as operators")
     if len(res.result.args) != 1:
       raise Exception("Operators should have exactly one argument")
-    return Result(Operator(res.result.args[0], self))
+    return Result(Operator(res.result.args[0], self.argc, self.method, self.type_selector))
 
   def __reduce__(self):
     return reduce(self, (self.rule, self.argc, self.type_selector, self.method))
@@ -192,10 +120,10 @@ class Op(AbstractRule):
     return f"<{self.rule}>"
 
 class ArgOp(Op):
-  def __init__(self, rule, type_selector, method):
+  def __init__(self, rule: AbstractRule, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule, 0, type_selector, method)
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     res = super().process(iview, rules, state)
     if isinstance(res, Result):
       op = res.result
@@ -209,11 +137,11 @@ class ArgOp(Op):
     return f"<$ {self.rule}>"
 
 class Syntax(AbstractRule):
-  def __init__(self, rule):
+  def __init__(self, rule: AbstractRule):
     super().__init__(rule)
     self.rule = rule
 
-  def process(self, iview, rules, state):
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -227,10 +155,3 @@ class Syntax(AbstractRule):
   def __str__(self):
     return f"({self.rule})"
 
-class StarNode:
-  def __init__(self, args=[], ops=[]):
-    self.args = args
-    self.ops = ops
-
-  def __reduce__(self):
-    return reduce(self, (self.args, self.ops))

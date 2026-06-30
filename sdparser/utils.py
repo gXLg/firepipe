@@ -1,13 +1,16 @@
+from typing import Iterable, Any
+
+
 class IndexedView:
-  def __init__(self, view, index=0):
+  def __init__(self, view: Iterable[Any], index: int=0):
     self.view = view
     self.index = index
     self.stack = []
 
-  def step(self, n):
+  def step(self, n: int) -> Iterable[Any]:
     self.index += n
 
-  def peek(self, n):
+  def peek(self, n: int) -> Iterable[Any]:
     return self.view[self.index:self.index + n]
 
   def save(self):
@@ -28,14 +31,14 @@ class IndexedView:
   def __setstate__(self, state):
     setstate(self, state)
 
-def reduce(obj, constr=(), state=()):
+def reduce(obj: Any, constr: Iterable[Any]=(), state: Iterable[str]=()) -> tuple[type, tuple[Any], dict[str, Any]]:
   _state = {}
   for attr in state:
     if hasattr(obj, attr):
       _state[attr] = getattr(obj, attr)
   return (obj.__class__, tuple(constr), _state)
 
-def setstate(obj, state):
+def setstate(obj: Any, state: dict[str, Any]):
   if state is None:
     return
   for attr in state:

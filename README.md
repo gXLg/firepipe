@@ -104,8 +104,3 @@ Cons:
 * Requires the user to manually write a curated rule list
   free from left recursion or other infinitely recursive rule
   definitions
-
-# Acronym
-SIPER stands for:
-"Serializable Iterative Processing and Evaluation Runtime"
-

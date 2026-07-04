@@ -1,7 +1,7 @@
 from typing import Sequence, Any
 
 from ..lexing.lexer import Lexer
-from ..lexing.types import Token
+from ..lexing.types import AbstractTokenType
 from ..parsing.parser import Parser, ParseFrame
 from ..parsing.types import AbstractRule
 from ..processing.processor import Processor, ProcessorFrame
@@ -10,8 +10,8 @@ from .env import Env
 
 
 class Machine:
-  def __init__(self, tokens: Sequence[Token], rules: dict[str, AbstractRule], env: Env):
-    self.tokens = tokens
+  def __init__(self, token_types: Sequence[AbstractTokenType], rules: dict[str, AbstractRule], env: Env):
+    self.token_types = token_types
     self.rules = rules
     self.env = env
 
@@ -29,4 +29,4 @@ class Machine:
     return result
 
   def __reduce__(self):
-    return reduce(self, (self.tokens, self.rules, self.env))
+    return reduce(self, (self.token_types, self.rules, self.env))

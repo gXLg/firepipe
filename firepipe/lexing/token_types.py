@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from .types import Token, AbstractTokenType
 from ..utils import IndexedView, reduce
@@ -56,7 +56,7 @@ class IntegerTokenType(AbstractTokenType):
     return "Int()"
 
 class IgnoreTokenType(AbstractTokenType):
-  def __init__(self, ignore_list: Iterable[AbstractTokenType]):
+  def __init__(self, ignore_list: Sequence[AbstractTokenType]):
     super().__init__()
     self.list = ignore_list
 

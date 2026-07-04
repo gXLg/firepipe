@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from ..utils import IndexedView, reduce, setstate
 from .types import AbstractTokenType, Token, LexerError
@@ -6,7 +6,7 @@ from .token_types import IgnoreTokenType
 
 
 class Lexer:
-  def __init__(self, ttypes: Iterable[AbstractTokenType]):
+  def __init__(self, ttypes: Sequence[AbstractTokenType]):
     self.types = []
     self.ignore_types = []
     for ttype in ttypes:
@@ -15,7 +15,7 @@ class Lexer:
       else:
         self.types.append(ttype)
 
-  def lex(self, view: Iterable[str]) -> Iterable[Token]:
+  def lex(self, view: Sequence[str]) -> Sequence[Token]:
     iview = IndexedView(view)
     tokens = []
     while not iview.done():

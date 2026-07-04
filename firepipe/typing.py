@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from .lexing.types import Token
 from .utils import reduce
@@ -7,7 +7,7 @@ from .utils import reduce
 class RuntimeType: pass
 
 class RuntimeTypeSelector:
-  def select(self, token: Token, env: Any, args: Iterable[Any]) -> RuntimeType:
+  def select(self, token: Token, env: Any, args: Sequence[Any]) -> RuntimeType:
     raise NotImplementedError
 
   def __reduce__(self):
@@ -18,7 +18,7 @@ class DefaultSelector(RuntimeTypeSelector):
     super().__init__()
     self.type = default_type
 
-  def select(self, token: Token, env: Any, args: Iterable[Any]) -> RuntimeType:
+  def select(self, token: Token, env: Any, args: Sequence[Any]) -> RuntimeType:
     return self.type
 
   def __reduce__(self):

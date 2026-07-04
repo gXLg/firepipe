@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from .types import Node, ProcessorError
 from ..lexing.types import Token
@@ -23,7 +23,7 @@ class ProcessorFrame:
   def args_done(self) -> bool:
     return self.arg_index == len(self.node.args)
 
-  def process_arg(self, stack: Iterable[ProcessorFrame]):
+  def process_arg(self, stack: Sequence[ProcessorFrame]):
     arg = self.node.args[self.arg_index]
     self.arg_index += 1
     if isinstance(arg, Node):
@@ -47,7 +47,7 @@ class ProcessorFrame:
     val = func(op.token, env, *args)
     self.values[:op.argc] = [Value(val)]
 
-  def finalize(self, stack: Iterable[ProcessorFrame]):
+  def finalize(self, stack: Sequence[ProcessorFrame]):
     if len(self.values) != 1:
       raise ProcessorResultsLenError(len(self.values))
     res = self.values[0]
@@ -58,7 +58,7 @@ class ProcessorFrame:
       stack[-1].values.append(res)
     return res.value
 
-  def step(self, env: Any, stack: Iterable[ProcessorFrame]) -> Any:
+  def step(self, env: Any, stack: Sequence[ProcessorFrame]) -> Any:
     if not self.args_done():
       self.process_arg(stack)
       return

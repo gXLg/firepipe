@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from ..utils import IndexedView, reduce, setstate, FirepipeError
 from ..lexing.types import Token
@@ -12,7 +12,7 @@ class ParseFrame:
     self.rule = rule
     self.state = []
 
-  def step(self, iview: IndexedView, rules: dict[str, AbstractRule], stack: Iterable[ParseFrame]) -> Result | Failure:
+  def step(self, iview: IndexedView, rules: dict[str, AbstractRule], stack: Sequence[ParseFrame]) -> Result | Failure:
     res = self.rule.process(iview, rules, self.state)
     if isinstance(res, Request):
       stack.append(ParseFrame(res.rule))
@@ -39,7 +39,7 @@ class Parser:
       raise LookupError("The entry rule '$' is not defined!")
     self.init = rules["$"]
 
-  def parse(self, tokens: Iterable[Token], frame: ParseFrame) -> Node:
+  def parse(self, tokens: Sequence[Token], frame: ParseFrame) -> Node:
     iview = IndexedView(tokens)
     stack = [frame]
     res = Failure(None)
@@ -56,7 +56,7 @@ class Parser:
     return reduce(self, (self.rules,))
 
 class UnexpectedToken(ParseError):
-  def __init__(self, token: Token, expected: Iterable[AbstractTokenType]):
+  def __init__(self, token: Token, expected: Sequence[AbstractTokenType]):
     tok_str = f"token '{token.string}' at {token.pos}" if token else "(end-of-file)"
     exp_str = f"any of {', '.join(map(str, expected))}" if expected else "(end-of-file)"
     super().__init__(f"Unexpected {tok_str}, expected {exp_str}")

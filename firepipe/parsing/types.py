@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from ..processing.types import Node, Operator
 from ..lexing.types import AbstractTokenType, Token
@@ -17,7 +17,7 @@ class AbstractRule:
       adapted_rules.append(rule)
     self.list = adapted_rules
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     raise NotImplementedError
 
   def __reduce__(self):
@@ -34,7 +34,7 @@ class RefRule(AbstractRule):
     super().__init__()
     self.key = key
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       if self.key == "$":
         raise ParserError("Referencing the entry rule")
@@ -59,7 +59,7 @@ class TokenRule(AbstractRule):
     super().__init__()
     self.type = ttype
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Result | Failure:
     if iview.done():
       return Failure(None, self.type)
     token = iview.peek(1)[0]
@@ -75,7 +75,7 @@ class TokenRule(AbstractRule):
     return str(self.type)
 
 class StarNode:
-  def __init__(self, args: Iterable[Node | Token]=(), ops: Iterable[Operator]=()):
+  def __init__(self, args: Sequence[Node | Token]=(), ops: Sequence[Operator]=()):
     self.args = args
     self.ops = ops
 

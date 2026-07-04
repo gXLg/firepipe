@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from ..processing.types import Node, Operator
 from ..typing import RuntimeTypeSelector
@@ -9,7 +9,7 @@ from .types import (
 )
 
 
-def fill_node(state: Iterable[Result]):
+def fill_node(state: Sequence[Result]):
   args = []
   ops = []
   for _res in state:
@@ -28,7 +28,7 @@ class Ordered(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
       return state[-1]
@@ -44,7 +44,7 @@ class Or(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
     if state and isinstance(state[-1], Result):
@@ -81,7 +81,7 @@ class Repeat(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     l = len(state) % len(self.list)
     if state and isinstance(state[-1], Failure):
       iview.restore()
@@ -100,7 +100,7 @@ class Star(Repeat):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     res = super().process(iview, rules, state)
     if isinstance(res, Result):
       node = res.result
@@ -118,7 +118,7 @@ class Op(AbstractRule):
     self.type_selector = type_selector
     self.method = method
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -140,7 +140,7 @@ class ArgOp(Op):
   def __init__(self, rule: AbstractRule, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule, 0, type_selector, method)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     res = super().process(iview, rules, state)
     if isinstance(res, Result):
       op = res.result
@@ -158,7 +158,7 @@ class Syntax(AbstractRule):
     super().__init__(rule)
     self.rule = rule
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -176,7 +176,7 @@ class Optional(Ordered):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     res = super().process(iview, rules, state)
     if isinstance(res, Failure):
       res = Result(StarNode())

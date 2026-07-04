@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable
+from typing import Sequence
 
 from ..lexing.types import Token
 from ..typing import RuntimeTypeSelector
@@ -7,7 +7,7 @@ from ..utils import reduce, FirepipeError
 
 
 class Node:
-  def __init__(self, args: Iterable[Node | Token]=(), ops: Iterable[Operator]=()):
+  def __init__(self, args: Sequence[Node | Token]=(), ops: Sequence[Operator]=()):
     self.args = tuple(args)
     self.ops = tuple(ops)
 

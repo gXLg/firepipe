@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Sequence, Any
 
 from ..lexing.lexer import Lexer
 from ..lexing.types import Token
@@ -10,7 +10,7 @@ from .env import Env
 
 
 class Machine:
-  def __init__(self, tokens: Iterable[Token], rules: dict[str, AbstractRule], env: Env):
+  def __init__(self, tokens: Sequence[Token], rules: dict[str, AbstractRule], env: Env):
     self.tokens = tokens
     self.rules = rules
     self.env = env

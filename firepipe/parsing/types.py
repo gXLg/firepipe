@@ -37,9 +37,9 @@ class RefRule(AbstractRule):
   def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       if self.key == "$":
-        raise ParserError("Referencing the entry rule")
+        raise ParseError("Referencing the entry rule")
       if self.key not in rules:
-        raise ParserError("Referencing non-existing rule")
+        raise ParseError("Referencing non-existing rule")
       return Request(rules[self.key])
 
     res = state[0]

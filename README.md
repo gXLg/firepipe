@@ -6,7 +6,7 @@
 <b>P</b>rocessing and
 <b>I</b>nterpretation of
 <b>P</b>arseable
-<b>E</b>ntitues
+<b>E</b>ntities
 </i></sup>
 
 A generator framework for iterative, serializable parsers and processors

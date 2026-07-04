@@ -82,5 +82,25 @@ class WhiteSpaceTokenType(IgnoreTokenType):
       SymbolTokenType("\v")
     ])
 
+  def __reduce__(self):
+    return reduce(self)
+
   def __str__(self):
     return "Space()"
+
+class LetterTokenType(AbstractTokenType):
+  def __init__(self):
+    super().__init__()
+
+  def lex(self, iview: IndexedView):
+    pos = iview.index
+    string = iview.peek(1)
+    if string.isascii() and string.isalpha():
+      iview.step(1)
+      return Token(string, pos, self)
+
+  def prepare(self, token: Token) -> str:
+    return token.string
+
+  def __str__(self):
+    return "Letter()"

@@ -1,7 +1,7 @@
 from typing import Iterable, Any
 
 from ..utils import IndexedView, reduce, setstate
-from .types import AbstractTokenType, Token
+from .types import AbstractTokenType, Token, LexerError
 from .token_types import IgnoreTokenType
 
 
@@ -28,7 +28,7 @@ class Lexer:
           tokens.append(res)
           break
       else:
-        raise Exception(f"Unknown token: '{iview.peek(5)}...' at {iview.index}")
+        raise UnknownTokenError(iview)
     return tokens
 
   def __reduce__(self):
@@ -36,3 +36,7 @@ class Lexer:
 
   def __setstate__(self, state):
     setstate(self, state)
+
+class UnknownTokenError(LexerError):
+  def __init__(self, iview: IndexedView):
+    super().__init__(f"Unknown token: '{iview.peek(5)}...' at {iview.index}")

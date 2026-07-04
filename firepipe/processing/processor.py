@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Iterable, Any
 
-from .types import Node
+from .types import Node, ProcessorError
 from ..lexing.types import Token
 from ..utils import reduce, setstate
 
@@ -33,7 +33,7 @@ class ProcessorFrame:
     elif isinstance(arg, Value):
       self.values.append(arg)
     else:
-      raise Exception("Unknown type of frame argument")
+      raise UnknownProcessorFrameArgument(arg)
 
   def ops_done(self) -> bool:
     return self.op_index == len(self.node.ops)
@@ -44,14 +44,15 @@ class ProcessorFrame:
     args = [v.value for v in self.values[:op.argc]]
     selected_type = op.type_selector.select(op.token, env, args)
     func = getattr(selected_type, op.method)
-    self.values[:op.argc] = [Value(func(op.token, env, *args))]
+    val = func(op.token, env, *args)
+    self.values[:op.argc] = [Value(val)]
 
   def finalize(self, stack: Iterable[ProcessorFrame]):
     if len(self.values) != 1:
-      raise Exception(f"Frame produced {len(self.values)} values (instead of 1)")
+      raise ProcessorResultsLenError(len(self.values))
     res = self.values[0]
     if not isinstance(res, Value):
-      raise Exception(f"Frame execution resulted in a non-value object")
+      raise ProcessorResultTypeError(res)
     stack.pop()
     if stack:
       stack[-1].values.append(res)
@@ -86,3 +87,15 @@ class Processor:
 
   def __reduce__(self):
     return reduce(self, (self.env,))
+
+class UnknownProcessorFrameArgument(ProcessorError):
+  def __init__(self, argument: Any):
+    super().__init__(f"Unknown type of processor-frame argument: '{argument}' of type {type(argument).__name__}")
+
+class ProcessorResultsLenError(ProcessorError):
+  def __init__(self, values: int):
+    super().__init__(f"Frame produced {values} values, expected 1")
+
+class ProcessorResultTypeError(ProcessorError):
+  def __init__(self, result: Any):
+    super().__init__(f"Frame execution resulted in a non-value object '{result}' of type {type(result).__name__}")

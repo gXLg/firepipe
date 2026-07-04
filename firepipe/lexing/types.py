@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Iterable, Any
 
-from ..utils import IndexedView, reduce
+from ..utils import IndexedView, reduce, FirepipeError
 
 
 class Token:
@@ -27,5 +27,8 @@ class AbstractTokenType:
     return reduce(self)
 
   def __str__(self):
-    return "Rule()"
+    return f"TokenType({type(self).__name__})"
 
+class LexerError(FirepipeError):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)

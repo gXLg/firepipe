@@ -3,7 +3,8 @@ from typing import Iterable
 
 from ..lexing.types import Token
 from ..typing import RuntimeTypeSelector
-from ..utils import reduce
+from ..utils import reduce, FirepipeError
+
 
 class Node:
   def __init__(self, args: Iterable[Node | Token]=(), ops: Iterable[Operator]=()):
@@ -36,3 +37,7 @@ class Operator:
 
   def __reduce__(self):
     return reduce(self, (self.token, self.argc, self.method, self.type_selector))
+
+class ProcessorError(FirepipeError):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)

@@ -3,7 +3,7 @@ from typing import Iterable, Any
 
 from ..processing.types import Node, Operator
 from ..lexing.types import AbstractTokenType, Token
-from ..utils import IndexedView, reduce
+from ..utils import IndexedView, reduce, setstate, FirepipeError
 
 class AbstractRule:
   def __init__(self, *rules: AbstractRule):
@@ -37,9 +37,9 @@ class RefRule(AbstractRule):
   def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if not state:
       if self.key == "$":
-        raise Exception("Referencing the entry rule")
+        raise ParserError("Referencing the entry rule")
       if self.key not in rules:
-        raise Exception("Referencing non-existing rule")
+        raise ParserError("Referencing non-existing rule")
       return Request(rules[self.key])
 
     res = state[0]
@@ -61,10 +61,10 @@ class TokenRule(AbstractRule):
 
   def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Result | Failure:
     if iview.done():
-      return Failure()
+      return Failure(None, self.type)
     token = iview.peek(1)[0]
     if token.type != self.type:
-      return Failure()
+      return Failure(token, self.type)
     iview.step(1)
     return Result(Node([token]))
 
@@ -97,5 +97,13 @@ class Result:
     return reduce(self, (self.result,))
 
 class Failure:
+  def __init__(self, instead: Token | None, *expected: AbstractTokenType):
+    self.instead = instead
+    self.expected = expected
+
   def __reduce__(self):
-    return reduce(self)
+    return reduce(self, (self.instead, *self.expected))
+
+class ParseError(FirepipeError):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)

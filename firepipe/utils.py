@@ -43,3 +43,7 @@ def setstate(obj: Any, state: dict[str, Any]):
     return
   for attr in state:
     setattr(obj, attr, state[attr])
+
+class FirepipeError(Exception):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)

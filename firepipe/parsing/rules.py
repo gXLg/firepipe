@@ -4,7 +4,9 @@ from ..processing.types import Node, Operator
 from ..typing import RuntimeTypeSelector
 from ..lexing.types import AbstractTokenType
 from ..utils import IndexedView, reduce, setstate
-from .types import AbstractRule, StarNode, Result, Request, Failure
+from .types import (
+  AbstractRule, StarNode, Result, Request, Failure, ParseError
+)
 
 
 def fill_node(state: Iterable[Result]):
@@ -29,7 +31,7 @@ class Ordered(AbstractRule):
   def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
-      return Failure()
+      return state[-1]
     if len(state) == len(self.list):
       iview.discard()
       return Result(fill_node(state))
@@ -52,7 +54,22 @@ class Or(AbstractRule):
         res = Result(res.result.simplify())
       return res
     if len(state) == len(self.list):
-      return Failure()
+      token = None if iview.done() else iview.peek(1)[0]
+      # filter out the furthest failures
+      last = token.pos if token else -1
+      exp = set()
+      for failure in state:
+        if failure.instead is None:
+          token = None
+          last = float("inf")
+          exp = {*failure.expected}
+        elif failure.instead.pos > last:
+          token = failure.instead
+          last = token.pos
+          exp = {*failure.expected}
+        elif failure.instead.pos == last:
+          exp.update(failure.expected)
+      return Failure(token, *exp)
     l = len(state)
     iview.save()
     return Request(self.list[l])
@@ -108,9 +125,9 @@ class Op(AbstractRule):
     if isinstance(res, Failure):
       return res
     if not isinstance(res.result, Node):
-      raise Exception("Only normal nodes can be declared as operators")
+      raise NonNodeError(res.result)
     if len(res.result.args) != 1:
-      raise Exception("Operators should have exactly one argument")
+      raise Operator("Operators should have exactly one argument")
     return Result(Operator(res.result.args[0], self.argc, self.method, self.type_selector))
 
   def __reduce__(self):
@@ -155,3 +172,27 @@ class Syntax(AbstractRule):
   def __str__(self):
     return f"({self.rule})"
 
+class Optional(Ordered):
+  def __init__(self, *rules: AbstractRule):
+    super().__init__(*rules)
+
+  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Iterable[Result | Failure]) -> Request | Result:
+    res = super().process(iview, rules, state)
+    if isinstance(res, Failure):
+      res = Result(StarNode())
+    if isinstance(res, Result):
+      node = res.result
+      res = Result(StarNode(node.args, node.ops))
+    return res
+
+class OperatorError(ParseError):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+
+class NonNodeError(OperatorError):
+  def __init__(self, result: Any):
+    super().__init__(f"Only normal nodes can be declared as operators, tried with '{result}' of type {type(result).__name__}")
+
+class BadArgsError(OperatorError):
+  def __init__(self, args: int):
+    super().__init__(f"Operators should have exactly one argument, provided: {args}")

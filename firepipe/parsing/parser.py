@@ -12,7 +12,7 @@ class ParseFrame:
     self.rule = rule
     self.state = []
 
-  def step(self, iview: IndexedView, rules: dict[str, AbstractRule], stack: Sequence[ParseFrame]) -> Result | Failure:
+  def step(self, iview: IndexedView, rules: dict[str, AbstractRule], stack: Sequence[ParseFrame]) -> Result | Failure | None:
     res = self.rule.process(iview, rules, self.state)
     if isinstance(res, Request):
       stack.append(ParseFrame(res.rule))
@@ -24,7 +24,7 @@ class ParseFrame:
     else:
       raise UnknownParseFrameResult(res)
 
-    return Failure(None)
+    return None
 
   def __reduce__(self):
     return reduce(self, (self.rule,), ("state",))
@@ -46,6 +46,8 @@ class Parser:
     while stack:
       frame = stack[-1]
       res = frame.step(iview, self.rules, stack)
+    if res is None:
+      raise ParseError("Parser stack emptied before producing a result")
     if isinstance(res, Failure):
       raise UnexpectedToken(res.instead, res.expected)
     if not iview.done():

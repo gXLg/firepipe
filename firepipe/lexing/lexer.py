@@ -15,7 +15,7 @@ class Lexer:
       else:
         self.types.append(ttype)
 
-  def lex(self, view: Sequence[str]) -> Sequence[Token]:
+  def lex(self, view: str) -> Sequence[Token]:
     iview = IndexedView(view)
     tokens = []
     while not iview.done():
@@ -38,5 +38,5 @@ class Lexer:
     setstate(self, state)
 
 class UnknownTokenError(LexerError):
-  def __init__(self, iview: IndexedView):
+  def __init__(self, iview: IndexedView[str]):
     super().__init__(f"Unknown token: '{iview.peek(5)}...' at {iview.index}")

@@ -17,7 +17,7 @@ class Token:
     return reduce(self, (self.string, self.pos, self.type))
 
 class AbstractTokenType:
-  def lex(self, iview: IndexedView) -> Token | None:
+  def lex(self, iview: IndexedView[str]) -> Token | None:
     raise NotImplementedError
 
   def prepare(self, token: Token) -> Any:

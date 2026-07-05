@@ -17,7 +17,7 @@ class AbstractRule:
       adapted_rules.append(rule)
     self.list = adapted_rules
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     raise NotImplementedError
 
   def __reduce__(self):
@@ -34,7 +34,7 @@ class RefRule(AbstractRule):
     super().__init__()
     self.key = key
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       if self.key == "$":
         raise ParseError("Referencing the entry rule")
@@ -59,7 +59,7 @@ class TokenRule(AbstractRule):
     super().__init__()
     self.type = ttype
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Result | Failure:
     if iview.done():
       return Failure(None, self.type)
     token = iview.peek(1)[0]
@@ -90,7 +90,7 @@ class Request:
     return reduce(self, (self.rule,))
 
 class Result:
-  def __init__(self, result: Any):
+  def __init__(self, result: Node | Token | StarNode | Operator):
     self.result = result
 
   def __reduce__(self):

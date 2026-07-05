@@ -15,7 +15,7 @@ class Machine:
     self.rules = rules
     self.env = env
 
-    self.lexer = Lexer(tokens)
+    self.lexer = Lexer(token_types)
     self.parser = Parser(rules)
     self.processor = Processor(env)
 

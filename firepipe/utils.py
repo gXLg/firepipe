@@ -1,16 +1,19 @@
-from typing import Sequence, Any
+from typing import Sequence, Any, Protocol, Self
 
+class View(Protocol):
+  def __len__(self) -> int: ...
+  def __getitem__(self, key: slice, /) -> Any: ...
 
-class IndexedView:
-  def __init__(self, view: Sequence[Any], index: int=0):
+class IndexedView[I: View]:
+  def __init__(self, view: I, index: int=0):
     self.view = view
     self.index = index
     self.stack = []
 
-  def step(self, n: int) -> Sequence[Any]:
+  def step(self, n: int):
     self.index += n
 
-  def peek(self, n: int) -> Sequence[Any]:
+  def peek(self, n: int) -> I:
     return self.view[self.index:self.index + n]
 
   def save(self):
@@ -22,7 +25,7 @@ class IndexedView:
   def discard(self):
     self.stack.pop()
 
-  def done(self):
+  def done(self) -> bool:
     return self.index == len(self.view)
 
   def __reduce__(self):

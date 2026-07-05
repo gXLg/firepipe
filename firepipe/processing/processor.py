@@ -23,7 +23,7 @@ class ProcessorFrame:
   def args_done(self) -> bool:
     return self.arg_index == len(self.node.args)
 
-  def process_arg(self, stack: Sequence[ProcessorFrame]):
+  def process_arg(self, stack: list[ProcessorFrame]):
     arg = self.node.args[self.arg_index]
     self.arg_index += 1
     if isinstance(arg, Node):
@@ -47,7 +47,7 @@ class ProcessorFrame:
     val = func(op.token, env, *args)
     self.values[:op.argc] = [Value(val)]
 
-  def finalize(self, stack: Sequence[ProcessorFrame]):
+  def finalize(self, stack: list[ProcessorFrame]):
     if len(self.values) != 1:
       raise ProcessorResultsLenError(len(self.values))
     res = self.values[0]
@@ -58,7 +58,7 @@ class ProcessorFrame:
       stack[-1].values.append(res)
     return res.value
 
-  def step(self, env: Any, stack: Sequence[ProcessorFrame]) -> Any:
+  def step(self, env: Any, stack: list[ProcessorFrame]) -> Any:
     if not self.args_done():
       self.process_arg(stack)
       return

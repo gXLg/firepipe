@@ -1,8 +1,8 @@
-from typing import Sequence, Any
+from typing import Sequence, Any, cast
 
 from ..processing.types import Node, Operator
 from ..typing import RuntimeTypeSelector
-from ..lexing.types import AbstractTokenType
+from ..lexing.types import Token, AbstractTokenType
 from ..utils import IndexedView, reduce, setstate
 from .types import (
   AbstractRule, StarNode, Result, Request, Failure, ParseError
@@ -28,13 +28,13 @@ class Ordered(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
       return state[-1]
     if len(state) == len(self.list):
       iview.discard()
-      return Result(fill_node(state))
+      return Result(fill_node(cast(Sequence[Result], state)))
     if not state:
       iview.save()
     l = len(state)
@@ -44,7 +44,7 @@ class Or(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if state and isinstance(state[-1], Failure):
       iview.restore()
     if state and isinstance(state[-1], Result):
@@ -58,7 +58,7 @@ class Or(AbstractRule):
       # filter out the furthest failures
       last = token.pos if token else -1
       exp = set()
-      for failure in state:
+      for failure in cast(Sequence[Failure], state):
         if failure.instead is None:
           token = None
           last = float("inf")
@@ -81,12 +81,12 @@ class Repeat(AbstractRule):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     l = len(state) % len(self.list)
     if state and isinstance(state[-1], Failure):
       iview.restore()
       cutoff = l if l else len(self.list)
-      return Result(fill_node(state[:-cutoff]))
+      return Result(fill_node(cast(Sequence[Result], state[:-cutoff])))
     if not l:
       if state:
         iview.discard()
@@ -100,9 +100,9 @@ class Star(Repeat):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     res = super().process(iview, rules, state)
-    if isinstance(res, Result):
+    if isinstance(res, Result) and isinstance(res.result, Node):
       node = res.result
       res = Result(StarNode(node.args, node.ops))
     return res
@@ -118,7 +118,7 @@ class Op(AbstractRule):
     self.type_selector = type_selector
     self.method = method
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -127,7 +127,9 @@ class Op(AbstractRule):
     if not isinstance(res.result, Node):
       raise NonNodeError(res.result)
     if len(res.result.args) != 1:
-      raise Operator("Operators should have exactly one argument")
+      raise BadArgsError(len(res.result.args))
+    if not isinstance(res.result.args[0], Token):
+      raise ArgsTokenError(res.result)
     return Result(Operator(res.result.args[0], self.argc, self.method, self.type_selector))
 
   def __reduce__(self):
@@ -140,9 +142,9 @@ class ArgOp(Op):
   def __init__(self, rule: AbstractRule, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule, 0, type_selector, method)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     res = super().process(iview, rules, state)
-    if isinstance(res, Result):
+    if isinstance(res, Result) and isinstance(res.result, Operator):
       op = res.result
       res = Result(Node(ops=[op]))
     return res
@@ -158,7 +160,7 @@ class Syntax(AbstractRule):
     super().__init__(rule)
     self.rule = rule
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       return Request(self.list[0])
     res = state[-1]
@@ -176,11 +178,11 @@ class Optional(Ordered):
   def __init__(self, *rules: AbstractRule):
     super().__init__(*rules)
 
-  def process(self, iview: IndexedView, rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
+  def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
     res = super().process(iview, rules, state)
     if isinstance(res, Failure):
       res = Result(StarNode())
-    if isinstance(res, Result):
+    if isinstance(res, Result) and isinstance(res.result, Node):
       node = res.result
       res = Result(StarNode(node.args, node.ops))
     return res
@@ -196,3 +198,7 @@ class NonNodeError(OperatorError):
 class BadArgsError(OperatorError):
   def __init__(self, args: int):
     super().__init__(f"Operators should have exactly one argument, provided: {args}")
+
+class ArgsTokenError(OperatorError):
+  def __init__(self, result: Any):
+    super().__init__(f"Operator argument should be a Token, tried with '{result}' of type {type(result).__name__}")

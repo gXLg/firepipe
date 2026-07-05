@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Sequence, Any
 
 from ..utils import IndexedView, reduce, setstate, FirepipeError
-from ..lexing.types import Token
+from ..lexing.types import Token, AbstractTokenType
 from ..processing.types import Node
 from .types import AbstractRule, Request, Result, Failure, ParseError
 
@@ -12,7 +12,7 @@ class ParseFrame:
     self.rule = rule
     self.state = []
 
-  def step(self, iview: IndexedView, rules: dict[str, AbstractRule], stack: Sequence[ParseFrame]) -> Result | Failure | None:
+  def step(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], stack: list[ParseFrame]) -> Result | Failure | None:
     res = self.rule.process(iview, rules, self.state)
     if isinstance(res, Request):
       stack.append(ParseFrame(res.rule))
@@ -52,13 +52,15 @@ class Parser:
       raise UnexpectedToken(res.instead, res.expected)
     if not iview.done():
       raise UnexpectedToken(iview.peek(1)[0], [])
+    if not isinstance(res.result, Node):
+      raise NonNodeResult(res.result)
     return res.result
 
   def __reduce__(self):
     return reduce(self, (self.rules,))
 
 class UnexpectedToken(ParseError):
-  def __init__(self, token: Token, expected: Sequence[AbstractTokenType]):
+  def __init__(self, token: Token | None, expected: Sequence[AbstractTokenType]):
     tok_str = f"token '{token.string}' at {token.pos}" if token else "(end-of-file)"
     exp_str = f"any of {', '.join(map(str, expected))}" if expected else "(end-of-file)"
     super().__init__(f"Unexpected {tok_str}, expected {exp_str}")
@@ -66,3 +68,7 @@ class UnexpectedToken(ParseError):
 class UnknownParseFrameResult(ParseError):
   def __init__(self, result: Any):
     super().__init__(f"Unknown type of parse-frame result: '{result}' of type {type(result).__name__}")
+
+class NonNodeResult(ParseError):
+  def __init__(self, result: Any):
+    super().__init__(f"The parsing shouls result in a node, instead got '{result}' of type {type(result).__name__}")

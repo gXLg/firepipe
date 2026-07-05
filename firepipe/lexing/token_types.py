@@ -10,7 +10,7 @@ class SymbolTokenType(AbstractTokenType):
     self.symbol = symbol
     self.len = len(symbol)
 
-  def lex(self, iview: IndexedView) -> Token | None:
+  def lex(self, iview: IndexedView[str]) -> Token | None:
     pos = iview.index
     string = iview.peek(self.len)
     if string == self.symbol:
@@ -30,7 +30,7 @@ class IntegerTokenType(AbstractTokenType):
   def __init__(self):
     super().__init__()
 
-  def lex(self, iview: IndexedView) -> Token | None:
+  def lex(self, iview: IndexedView[str]) -> Token | None:
     iview.save()
     pos = iview.index
     n = ""
@@ -60,7 +60,7 @@ class IgnoreTokenType(AbstractTokenType):
     super().__init__()
     self.list = ignore_list
 
-  def lex(self, iview: IndexedView):
+  def lex(self, iview: IndexedView[str]):
     while any(ttype.lex(iview) is not None for ttype in self.list):
       pass
 
@@ -68,7 +68,7 @@ class IgnoreTokenType(AbstractTokenType):
     return None
 
   def __reduce__(self):
-    return reduce(self, (tuple(self.ignore_list),))
+    return reduce(self, (tuple(self.list),))
 
   def __str__(self):
     return f"Ignore({', '.join(map(str, self.list))})"
@@ -92,9 +92,9 @@ class LetterTokenType(AbstractTokenType):
   def __init__(self):
     super().__init__()
 
-  def lex(self, iview: IndexedView):
+  def lex(self, iview: IndexedView[str]):
     pos = iview.index
-    string = iview.peek(1)
+    string = iview.peek(1)[0]
     if string.isascii() and string.isalpha():
       iview.step(1)
       return Token(string, pos, self)

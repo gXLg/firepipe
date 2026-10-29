@@ -5,7 +5,10 @@ from ..typing import RuntimeTypeSelector
 from ..lexing.types import Token, AbstractTokenType
 from ..utils import IndexedView, reduce, setstate
 from .types import (
-  AbstractRule, StarNode, Result, Request, Failure, ParseError
+  AbstractRule, StarNode,
+  Result, Request, Failure,
+  ParseError,
+  RuleArg
 )
 
 
@@ -25,7 +28,7 @@ def fill_node(state: Sequence[Result]):
   return Node(args, ops).simplify()
 
 class Ordered(AbstractRule):
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     super().__init__(*rules)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
@@ -41,7 +44,7 @@ class Ordered(AbstractRule):
     return Request(self.list[l])
 
 class Or(AbstractRule):
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     super().__init__(*rules)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
@@ -78,7 +81,7 @@ class Or(AbstractRule):
     return f"[{' | '.join(f'({r})' for r in map(str, self.list))}]"
 
 class Repeat(AbstractRule):
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     super().__init__(*rules)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
@@ -97,7 +100,7 @@ class Repeat(AbstractRule):
     return f"[{', '.join(map(str, self.list))}]*"
 
 class Star(Repeat):
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     super().__init__(*rules)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
@@ -111,7 +114,7 @@ class Star(Repeat):
     return f"*[{', '.join(map(str, self.list))}]*"
 
 class Op(AbstractRule):
-  def __init__(self, rule: AbstractRule, argc: int, type_selector: RuntimeTypeSelector, method: str):
+  def __init__(self, rule: RuleArg, argc: int, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule)
     self.rule = rule
     self.argc = argc
@@ -139,7 +142,7 @@ class Op(AbstractRule):
     return f"<{self.rule}>"
 
 class ArgOp(Op):
-  def __init__(self, rule: AbstractRule, type_selector: RuntimeTypeSelector, method: str):
+  def __init__(self, rule: RuleArg, type_selector: RuntimeTypeSelector, method: str):
     super().__init__(rule, 0, type_selector, method)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
@@ -156,7 +159,7 @@ class ArgOp(Op):
     return f"<$ {self.rule}>"
 
 class Syntax(AbstractRule):
-  def __init__(self, rule: AbstractRule):
+  def __init__(self, rule: RuleArg):
     super().__init__(rule)
     self.rule = rule
 
@@ -175,7 +178,7 @@ class Syntax(AbstractRule):
     return f"({self.rule})"
 
 class Optional(Ordered):
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     super().__init__(*rules)
 
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result:
@@ -186,6 +189,37 @@ class Optional(Ordered):
       node = res.result
       res = Result(StarNode(node.args, node.ops))
     return res
+
+
+class BinInfLeft(Ordered):
+  def __init__(self, left: RuleArg, op: RuleArg, right: RuleArg | None=None):
+    super().__init__(left, Star(op, right if right else left))
+    self.left = left
+    self.op = op
+    self.right = right
+
+  def __reduce__(self):
+    return reduce(self, (self.left, self.op, self.right))
+
+class BinInfRight(Or):
+  def __init__(self, left: RuleArg, op: RuleArg, right: RuleArg | None=None):
+    super().__init__(Ordered(left, op, self), right if right else left)
+    self.left = left
+    self.op = op
+    self.right = right
+
+  def __reduce__(self):
+    return reduce(self, (self.left, self.op, self.right))
+
+class UnPref(Ordered):
+  def __init__(self, op: RuleArg, right: RuleArg):
+    super().__init__(op, right)
+    self.op = op
+    self.right = right
+
+  def __reduce__(self):
+    return reduce(self, (self.op, self.right))
+
 
 class OperatorError(ParseError):
   def __init__(self, *args, **kwargs):

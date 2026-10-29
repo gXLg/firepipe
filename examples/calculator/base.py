@@ -3,7 +3,8 @@ from firepipe.lexing.token_types import (
   WhiteSpaceTokenType, LetterTokenType
 )
 from firepipe.parsing.rules import (
-  Op, ArgOp, Or, Ordered, Syntax, Star, Repeat
+  Op, ArgOp, Or, Ordered, Syntax, Star, Repeat,
+  BinInfLeft, BinInfRight, UnPref
 )
 from firepipe.typing import RuntimeType, DefaultSelector
 from firepipe.pipeline.machine import Machine
@@ -91,12 +92,12 @@ ARG_VAR = ArgOp(VAR, type_selector, "_arg_var")
 
 calc_rules = {
   "$": Ordered("assign"),
-  "assign": Or(Ordered(VAR, OP_ASSIGN, "assign"), "sum"),
-  "sum": Ordered("product", Star(Or(OP_PLUS, OP_MINUS), "product")),
-  "product": Ordered("factor", Star(Or(OP_MUL, OP_DIV), "factor")),
+  "assign": BinInfRight(VAR, OP_ASSIGN, "sum"),
+  "sum": BinInfLeft("product", Or(OP_PLUS, OP_MINUS)),
+  "product": BinInfLeft("factor", Or(OP_MUL, OP_DIV)),
   "factor": Or("brackets", "unary", NUM, ARG_LAST, ARG_VAR),
   "brackets": Ordered(Syntax(LBR), "assign", Syntax(RBR)),
-  "unary": Ordered(Or(OP_UPLUS, OP_UMINUS), "factor")
+  "unary": UnPref(Or(OP_UPLUS, OP_UMINUS), "factor")
 }
 
 def create_calculator():

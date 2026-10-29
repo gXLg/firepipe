@@ -5,8 +5,12 @@ from ..processing.types import Node, Operator
 from ..lexing.types import AbstractTokenType, Token
 from ..utils import IndexedView, reduce, setstate, FirepipeError
 
+
+type RuleArg = AbstractRule | AbstractTokenType | str
+
+
 class AbstractRule:
-  def __init__(self, *rules: AbstractRule):
+  def __init__(self, *rules: RuleArg):
     adapted_rules = []
     for rule in rules:
       if isinstance(rule, AbstractTokenType):

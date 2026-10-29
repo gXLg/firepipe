@@ -3,7 +3,7 @@ from typing import Sequence, Any, cast
 from ..processing.types import Node, Operator
 from ..typing import RuntimeTypeSelector
 from ..lexing.types import Token, AbstractTokenType
-from ..utils import IndexedView, reduce, setstate
+from ..utils import IndexedView, reduce, setstate # TODO: improve imports
 from .types import (
   AbstractRule, StarNode,
   Result, Request, Failure,
@@ -189,36 +189,6 @@ class Optional(Ordered):
       node = res.result
       res = Result(StarNode(node.args, node.ops))
     return res
-
-
-class BinInfLeft(Ordered):
-  def __init__(self, left: RuleArg, op: RuleArg, right: RuleArg | None=None):
-    super().__init__(left, Star(op, right if right else left))
-    self.left = left
-    self.op = op
-    self.right = right
-
-  def __reduce__(self):
-    return reduce(self, (self.left, self.op, self.right))
-
-class BinInfRight(Or):
-  def __init__(self, left: RuleArg, op: RuleArg, right: RuleArg | None=None):
-    super().__init__(Ordered(left, op, self), right if right else left)
-    self.left = left
-    self.op = op
-    self.right = right
-
-  def __reduce__(self):
-    return reduce(self, (self.left, self.op, self.right))
-
-class UnPref(Ordered):
-  def __init__(self, op: RuleArg, right: RuleArg):
-    super().__init__(op, right)
-    self.op = op
-    self.right = right
-
-  def __reduce__(self):
-    return reduce(self, (self.op, self.right))
 
 
 class OperatorError(ParserError):

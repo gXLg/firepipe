@@ -3,7 +3,9 @@ from firepipe.lexing.token_types import (
   WhiteSpaceTokenType, LetterTokenType
 )
 from firepipe.parsing.rules import (
-  Op, ArgOp, Or, Ordered, Syntax, Star, Repeat,
+  Op, ArgOp, Or, Ordered, Syntax, Star, Repeat
+)
+from firepipe.parsing.aliases import (
   BinInfLeft, BinInfRight, UnPref
 )
 from firepipe.typing import RuntimeType, DefaultSelector

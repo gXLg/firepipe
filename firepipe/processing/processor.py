@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Sequence, Any
 
-from .types import Node, ProcessorError
+from .types import Node, Operator, ProcessorError
 from ..lexing.types import Token
 from ..utils import reduce, setstate
 
@@ -44,7 +44,10 @@ class ProcessorFrame:
     args = [v.value for v in self.values[:op.argc]]
     selected_type = op.type_selector.select(op.token, env, args)
     func = getattr(selected_type, op.method)
-    val = func(op.token, env, *args)
+    try:
+      val = func(op.token, env, *args)
+    except Exception as ex:
+      raise ProcessorOpMethodError(op) from ex
     self.values[:op.argc] = [Value(val)]
 
   def finalize(self, stack: list[ProcessorFrame]):
@@ -99,3 +102,7 @@ class ProcessorResultsLenError(ProcessorError):
 class ProcessorResultTypeError(ProcessorError):
   def __init__(self, result: Any):
     super().__init__(f"Frame execution resulted in a non-value object '{result}' of type {type(result).__name__}")
+
+class ProcessorOpMethodError(ProcessorError):
+  def __init__(self, op: Operator):
+    super().__init__(f"Unexpected error occured while running '{op.method}' on operator {op}")

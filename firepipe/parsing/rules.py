@@ -7,7 +7,7 @@ from ..utils import IndexedView, reduce, setstate
 from .types import (
   AbstractRule, StarNode,
   Result, Request, Failure,
-  ParseError,
+  ParserError,
   RuleArg
 )
 
@@ -221,7 +221,7 @@ class UnPref(Ordered):
     return reduce(self, (self.op, self.right))
 
 
-class OperatorError(ParseError):
+class OperatorError(ParserError):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
 

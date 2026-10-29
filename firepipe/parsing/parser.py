@@ -4,7 +4,7 @@ from typing import Sequence, Any
 from ..utils import IndexedView, reduce, setstate, FirepipeError
 from ..lexing.types import Token, AbstractTokenType
 from ..processing.types import Node
-from .types import AbstractRule, Request, Result, Failure, ParseError
+from .types import AbstractRule, Request, Result, Failure, ParserError
 
 
 class ParseFrame:
@@ -47,7 +47,7 @@ class Parser:
       frame = stack[-1]
       res = frame.step(iview, self.rules, stack)
     if res is None:
-      raise ParseError("Parser stack emptied before producing a result")
+      raise ParserError("Parser stack emptied before producing a result")
     if isinstance(res, Failure):
       raise UnexpectedToken(res.instead, res.expected)
     if not iview.done():
@@ -59,16 +59,16 @@ class Parser:
   def __reduce__(self):
     return reduce(self, (self.rules,))
 
-class UnexpectedToken(ParseError):
+class UnexpectedToken(ParserError):
   def __init__(self, token: Token | None, expected: Sequence[AbstractTokenType]):
     tok_str = f"token '{token.string}' at {token.pos}" if token else "(end-of-file)"
     exp_str = f"any of {', '.join(map(str, expected))}" if expected else "(end-of-file)"
     super().__init__(f"Unexpected {tok_str}, expected {exp_str}")
 
-class UnknownParseFrameResult(ParseError):
+class UnknownParseFrameResult(ParserError):
   def __init__(self, result: Any):
     super().__init__(f"Unknown type of parse-frame result: '{result}' of type {type(result).__name__}")
 
-class NonNodeResult(ParseError):
+class NonNodeResult(ParserError):
   def __init__(self, result: Any):
     super().__init__(f"The parsing shouls result in a node, instead got '{result}' of type {type(result).__name__}")

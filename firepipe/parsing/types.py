@@ -41,9 +41,9 @@ class RefRule(AbstractRule):
   def process(self, iview: IndexedView[Sequence[Token]], rules: dict[str, AbstractRule], state: Sequence[Result | Failure]) -> Request | Result | Failure:
     if not state:
       if self.key == "$":
-        raise ParseError("Referencing the entry rule")
+        raise ParserError("Referencing the parser entry rule")
       if self.key not in rules:
-        raise ParseError("Referencing non-existing rule")
+        raise ParserError(f"Referencing non-existing parser rule '{self.key}'")
       return Request(rules[self.key])
 
     res = state[0]
@@ -108,6 +108,6 @@ class Failure:
   def __reduce__(self):
     return reduce(self, (self.instead, *self.expected))
 
-class ParseError(FirepipeError):
+class ParserError(FirepipeError):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)

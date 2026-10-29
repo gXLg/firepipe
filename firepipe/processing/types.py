@@ -26,17 +26,17 @@ class Node:
     return reduce(self, (self.args, self.ops))
 
 class Operator:
-  def __init__(self, token: Token, argc: int, method: str, type_selector: RuntimeTypeSelector):
+  def __init__(self, token: Token, argc: int, type_selector: RuntimeTypeSelector, method: str):
     self.token = token
     self.argc = argc
-    self.method = method
     self.type_selector = type_selector
+    self.method = method
 
   def __str__(self):
     return f"{{{self.token}}}"
 
   def __reduce__(self):
-    return reduce(self, (self.token, self.argc, self.method, self.type_selector))
+    return reduce(self, (self.token, self.argc, self.type_selector, self.method))
 
 class ProcessorError(FirepipeError):
   def __init__(self, *args, **kwargs):

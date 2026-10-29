@@ -133,7 +133,7 @@ class Op(AbstractRule):
       raise BadArgsError(len(res.result.args))
     if not isinstance(res.result.args[0], Token):
       raise ArgsTokenError(res.result)
-    return Result(Operator(res.result.args[0], self.argc, self.method, self.type_selector))
+    return Result(Operator(res.result.args[0], self.argc, self.type_selector, self.method))
 
   def __reduce__(self):
     return reduce(self, (self.rule, self.argc, self.type_selector, self.method))

@@ -8,7 +8,7 @@ from firepipe.parsing.rules import (
 )
 from firepipe.typing import RuntimeType, DefaultSelector
 from firepipe.pipeline.machine import Machine
-from firepipe.pipeline.machine import Env
+from firepipe.pipeline.env import Env
 
 
 class VarEnv(Env):

@@ -14,16 +14,12 @@ for arbitrary structured data.
 
 # Usage
 
-To use the library, clone the repo, add it in `PYTHONPATH` and
-simply import `firepipe`.
-
-> [!NOTE]
-> There are plans to publish this package to PyPi in the future.
-
-> [!IMPORTANT]
-> The name **might be slightly or completely changed in the future**,
-> as currently `pypi.org/project/firepipe` is occupied by another
-> unrelated project.
+```
+pip install firepipe-gen
+```
+```py
+import firepipe
+```
 
 Documentation and detailed explanation will follow in distant future.
 For now, see [<kbd>examples</kbd>](/examples).
@@ -37,7 +33,7 @@ languages, expression evaluators, type inferrers or transpilers.
 
 Common use cases:
 * Programming Language
-  1. A user decied to design a programming language
+  1. A user decides to design a programming language
   2. They use this library to define and generate lexers, parsers
      and interpreters for that language
   3. They serialize the finished language toolkit and use it in
@@ -75,7 +71,9 @@ Common use cases:
   regular expressions, with an additional ability for
   circular references
 * The library is equipped with a set of useful, predefined
-  rules, such as `Ordered`, `Or`, `Repeat`, `Star`
+  rules, such as `Ordered`, `Or`, `Repeat` or `Star`,
+  as well as aliases for common operator configurations
+  such as `BinInfLeft` or `UnPref`
 * Operators are defined directly at the grammar level
   through `Op` and `ArgOp` and can support any number of arguments
 * The grammar allows any types of associativity

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "firepipe-gen"
+version = "1.0.0"
+description = "A generator framework for iterative, serializable parsers and processors for arbitrary structured data"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/firepipe"]

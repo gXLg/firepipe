@@ -6,7 +6,7 @@ from firepipe.parsing.rules import (
   Op, ArgOp, Or, Ordered, Syntax, Star, Repeat
 )
 from firepipe.parsing.aliases import (
-  BinInfLeft, BinInfRight, UnPref
+  BinInfLeft, BinInfRight, UnPref, Brackets
 )
 from firepipe.typing import RuntimeType, DefaultSelector
 from firepipe.pipeline.machine import Machine
@@ -98,7 +98,7 @@ calc_rules = {
   "sum": BinInfLeft("product", Or(OP_PLUS, OP_MINUS)),
   "product": BinInfLeft("factor", Or(OP_MUL, OP_DIV)),
   "factor": Or("brackets", "unary", NUM, ARG_LAST, ARG_VAR),
-  "brackets": Ordered(Syntax(LBR), "assign", Syntax(RBR)),
+  "brackets": Brackets(LBR, "assign", RBR),
   "unary": UnPref(Or(OP_UPLUS, OP_UMINUS), "factor")
 }
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Sequence
 
+from ..utils import reduce, FirepipeError
 from ..lexing.types import Token
 from ..typing import RuntimeTypeSelector
-from ..utils import reduce, FirepipeError
 
 
 class Node:

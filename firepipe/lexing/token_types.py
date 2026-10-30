@@ -1,7 +1,7 @@
 from typing import Sequence, Any
 
-from .types import Token, AbstractTokenType
 from ..utils import IndexedView, reduce
+from .types import Token, AbstractTokenType
 
 
 class SymbolTokenType(AbstractTokenType):

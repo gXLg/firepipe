@@ -1,6 +1,6 @@
 from ..utils import reduce
-from .rules import Ordered, Star, Or, Syntax
 from .types import RuleArg
+from .rules import Ordered, Star, Or, Syntax
 
 
 class BinInfLeft(Ordered):

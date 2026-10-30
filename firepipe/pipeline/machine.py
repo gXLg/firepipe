@@ -1,11 +1,11 @@
 from typing import Sequence, Any
 
+from ..utils import reduce
 from ..lexing.lexer import Lexer
 from ..lexing.types import AbstractTokenType
 from ..parsing.parser import Parser, ParseFrame
 from ..parsing.types import AbstractRule
 from ..processing.processor import Processor, ProcessorFrame
-from ..utils import reduce
 from .env import Env
 
 

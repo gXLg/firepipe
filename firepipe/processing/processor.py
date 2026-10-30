@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Sequence, Any
 
-from .types import Node, Operator, ProcessorError
-from ..lexing.types import Token
 from ..utils import reduce, setstate
+from ..lexing.types import Token
+from .types import Node, Operator, ProcessorError
 
 
 class Value:

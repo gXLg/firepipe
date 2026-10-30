@@ -1,7 +1,7 @@
 from typing import Sequence, Any
 
-from .lexing.types import Token
 from .utils import reduce
+from .lexing.types import Token
 
 
 class RuntimeType: pass

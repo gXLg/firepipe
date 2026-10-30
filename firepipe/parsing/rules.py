@@ -1,15 +1,15 @@
 from typing import Sequence, Any, cast
 
-from ..processing.types import Node, Operator
-from ..typing import RuntimeTypeSelector
+from ..utils import IndexedView, reduce, setstate
 from ..lexing.types import Token, AbstractTokenType
-from ..utils import IndexedView, reduce, setstate # TODO: improve imports
 from .types import (
   AbstractRule, StarNode,
   Result, Request, Failure,
   ParserError,
   RuleArg
 )
+from ..processing.types import Node, Operator
+from ..typing import RuntimeTypeSelector
 
 
 def fill_node(state: Sequence[Result]):

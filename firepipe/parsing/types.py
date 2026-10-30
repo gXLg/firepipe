@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Sequence, Any
 
-from ..processing.types import Node, Operator
-from ..lexing.types import AbstractTokenType, Token
 from ..utils import IndexedView, reduce, setstate, FirepipeError
+from ..lexing.types import AbstractTokenType, Token
+from ..processing.types import Node, Operator
 
 
 type RuleArg = AbstractRule | AbstractTokenType | str

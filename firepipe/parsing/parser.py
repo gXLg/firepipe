@@ -3,8 +3,8 @@ from typing import Sequence, Any
 
 from ..utils import IndexedView, reduce, setstate, FirepipeError
 from ..lexing.types import Token, AbstractTokenType
-from ..processing.types import Node
 from .types import AbstractRule, Request, Result, Failure, ParserError
+from ..processing.types import Node
 
 
 class ParseFrame:

@@ -71,4 +71,4 @@ class UnknownParseFrameResult(ParserError):
 
 class NonNodeResult(ParserError):
   def __init__(self, result: Any):
-    super().__init__(f"The parsing shouls result in a node, instead got '{result}' of type {type(result).__name__}")
+    super().__init__(f"The parsing should result in a node, instead got '{result}' of type {type(result).__name__}")
